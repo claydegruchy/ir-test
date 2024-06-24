@@ -49,7 +49,7 @@
 #define IR_SEND_PIN 18
 int LED_BUILTIN = 2;
 
-// #include "TinyIRSender.hpp"
+#include "TinyIRSender.hpp"
 
 void setup()
 {
@@ -65,14 +65,82 @@ void setup()
  * The compiler is intelligent and removes the code for 16 bit address handling if we call it with an uint8_t address :-).
  * Using an uint16_t address or data requires additional 28 bytes program memory for NEC and 56 bytes program memory for FAST.
  */
-uint8_t sAddress = 0x02;
+uint8_t sAddress = 0x1308;
 // uint16_t sAddress = 0x02;
-uint8_t sCommand = 0x34;
+uint8_t sCommand = 0x87;
 // uint16_t sCommand = 0x34;
 uint8_t sRepeats = 0;
 
 void loop()
 {
-  Serial.println("loop");
+  /*
+   * Print current send values
+   */
+  Serial.println();
+  Serial.print(F("Send now:"));
+  Serial.print(F(" address=0x"));
+  Serial.print(sAddress, HEX);
+  Serial.print(F(" command=0x"));
+  Serial.print(sCommand, HEX);
+  Serial.print(F(" repeats="));
+  Serial.print(sRepeats);
+  Serial.println();
+
+  // Send with FAST
+  // No address and only 16 bits of data, interpreted as 8 bit command and 8 bit inverted command for parity checking
+  Serial.println(F("Send FAST with 8 bit command"));
+  Serial.flush();
+  sendFAST(IR_SEND_PIN, sCommand, sRepeats);
+  digitalWrite(IR_SEND_PIN, LOW);
+  delay(1000);
+
+  // Send with NEC
+  // NEC uses 8 bit address and 8 bit command each with 8 bit inverted parity checks
+  // However, sendNEC will accept 16 bit address and commands too (but remove the parity checks)
+  Serial.println(F("Send NEC with 8 bit address and command"));
+  Serial.flush();
+  sendNEC(IR_SEND_PIN, sAddress, sCommand, sRepeats);
+  digitalWrite(IR_SEND_PIN, LOW);
+  delay(1000);
+
+  // Send with Extended NEC
+  // Like NEC, but the address is forced 16 bits with no parity check
+  Serial.println(F("Send ExtendedNEC with 16 bit address and  8 bit command"));
+  Serial.flush();
+  sendExtendedNEC(IR_SEND_PIN, sAddress, sCommand, sRepeats);
+  digitalWrite(IR_SEND_PIN, LOW);
+  delay(1000);
+
+  // Send with ONKYO
+  // Like NEC, but both the address and command are forced 16 bits with no parity check
+  Serial.println(F("Send ONKYO with 16 bit address and command"));
+  Serial.flush();
+  sendONKYO(IR_SEND_PIN, sAddress, sCommand, sRepeats);
+  digitalWrite(IR_SEND_PIN, LOW);
+  delay(1000);
+
+  // Send with NEC2
+  // Instead of sending the NEC special repeat code, sends the full original frame for repeats
+  // Sending NEC2 is done by setting the optional bool NEC2Repeats argument to true (defaults to false)
+  // sendExtendedNEC and sendONKYO also support the NEC2Repeats argument for full frame repeats (not demonstrated here)
+  Serial.println(F("Send NEC2 with 8 bit address and command and original frame repeats"));
+  Serial.flush();
+  sendNEC(IR_SEND_PIN, sAddress, sCommand, sRepeats, true);
+  digitalWrite(IR_SEND_PIN, LOW);
+  delay(1000);
+
+  /*
+   * Increment send values
+   * Also increment address just for demonstration, which normally makes no sense
+   */
+  // sAddress += 0x0101;
+  // sCommand += 0x11;
+  sRepeats++;
+  // clip repeats at 4
+  if (sRepeats > 4)
+  {
+    sRepeats = 4;
+  }
+
   delay(1000); // delay must be greater than 5 ms (RECORD_GAP_MICROS), otherwise the receiver sees it as one long signal
 }
