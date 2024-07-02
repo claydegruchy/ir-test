@@ -46,7 +46,7 @@
  */
 #include <Arduino.h>
 
-#define IR_SEND_PIN 18
+#define IR_SEND_PIN 12
 int LED_BUILTIN = 2;
 
 #include "TinyIRSender.hpp"

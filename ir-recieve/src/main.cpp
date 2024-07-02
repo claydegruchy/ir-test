@@ -1,6 +1,7 @@
 // #define USE_ONKYO_PROTOCOL    // Like NEC, but take the 16 bit address and command each as one 16 bit value and not as 8 bit normal and 8 bit inverted value.
 // #define USE_FAST_PROTOCOL // Use FAST protocol instead of NEC / ONKYO
-#define IR_RECEIVE_PIN 23
+#define IR_RECEIVE_PIN 35
+// dont use pin 13 its fucked up
 #include "TinyIRReceiver.hpp"
 
 void setup()
@@ -20,6 +21,7 @@ void setup()
   Serial.println("Ready to receive");
 }
 
+int i = 0;
 void loop()
 {
   if (TinyIRReceiverData.justWritten)
@@ -47,4 +49,16 @@ void loop()
     }
     Serial.println();
   }
+
+  // i++;
+  // if (i > 9999)
+  // {
+  //   i = 0;
+  // }
+
+  // if (i % 500 == 0)
+  // {
+  //   Serial.print("loop:");
+  //   Serial.println(i);
+  // }
 }
