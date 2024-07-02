@@ -47,26 +47,49 @@
 #include <Arduino.h>
 
 #define IR_SEND_PIN 12
-int LED_BUILTIN = 2;
+#define TRIGGER_PIN 14
 
 #include "TinyIRSender.hpp"
 
 void setup()
 {
-  pinMode(LED_BUILTIN, OUTPUT);
 
   Serial.begin(115200);
   while (!Serial)
-    ; // Wait for Serial to become available. Is optimized away for some cores.
+    ;                                 // Wait for Serial to become available. Is optimized away for some cores.
+  pinMode(TRIGGER_PIN, INPUT_PULLUP); // config GPIO21 as input pin and enable the internal pull-down resistor
 }
 
-void loop()
+void activateLED()
 {
-
   // Send with NEC
+
   Serial.println(F("Send NEC with 8 bit command"));
   Serial.flush();
   sendNEC(IR_SEND_PIN, 0, 11, 2); // Send address 0 and command 11 on pin 3 with 2 repeats.
+}
 
-  delay(500); // delay must be greater than 5 ms (RECORD_GAP_MICROS), otherwise the receiver sees it as one long signal
+int cooldown = 1000;
+int cooldown_remaining = 0;
+void loop()
+{
+  Serial.println(cooldown_remaining);
+
+  if (cooldown_remaining > 0)
+  {
+    // we are on cooldown here
+    cooldown_remaining -= 1;
+    Serial.println(cooldown_remaining);
+    delay(1);
+    return;
+  }
+  int buttonState = digitalRead(TRIGGER_PIN);
+  Serial.println(buttonState);
+
+  if (!buttonState)
+  {
+
+    cooldown_remaining = cooldown;
+    activateLED();
+  }
 }
