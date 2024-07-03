@@ -8,7 +8,12 @@
 // "BATTERY_CHARACTERISTIC": "00002a19-0000-1000-8000-00805f9b34fb"
 
 #define SERVICE_UUID "0000180f-0000-1000-8000-00805f9b34fb"
-#define CHARACTERISTIC_UUID "00002a19-0000-1000-8000-00805f9b34fb"
+#define CHARACTERISTIC_UUID_HEALTH "00002a19-0000-1000-8000-00805f9b34fb"
+
+#define CHARACTERISTIC_UUID_SHOT_FIRED "ecc24e5d-0d95-4111-aa0a-6e40a76b8d74"
+#define CHARACTERISTIC_UUID_RELOAD_PRESSED "2002a0b9-6aa4-40aa-a2bd-de02c8ec4e04"
+
+#define CHARACTERISTIC_UUID_SHOT_RECIEVED "84c2e088-61e1-4df1-a1b4-12ec61a1144f"
 
 BLEServer *pServer = NULL;
 BLECharacteristic *pCharacteristic = NULL;
@@ -74,7 +79,7 @@ void setup()
 
   // Create a BLE Characteristic
   pCharacteristic = pService->createCharacteristic(
-      CHARACTERISTIC_UUID,
+      CHARACTERISTIC_UUID_HEALTH,
       BLECharacteristic::PROPERTY_READ |
           BLECharacteristic::PROPERTY_WRITE |
           BLECharacteristic::PROPERTY_NOTIFY |
