@@ -27,7 +27,35 @@ class MyServerCallbacks : public BLEServerCallbacks
     deviceConnected = false;
   }
 };
+
 uint32_t value = 69;
+
+class MyCallbacks : public BLECharacteristicCallbacks
+{
+  void onWrite(BLECharacteristic *pCharacteristic)
+  {
+    std::string recievedValue = pCharacteristic->getValue();
+    if (recievedValue.length() != 5)
+    {
+      Serial.println("This is a wrong value");
+    }
+    // Print the received bytes
+    Serial.print("Received Value: ");
+    for (int i = 0; i < recievedValue.length(); i++)
+    {
+      if (i == 0)
+      {
+        Serial.print("setting value to:");
+        value = (uint32_t)recievedValue[i];
+      }
+
+      Serial.print((uint32_t)recievedValue[i]);
+      // value=
+      Serial.print(" ");
+    }
+    Serial.println();
+  }
+};
 
 void setup()
 {
@@ -35,7 +63,7 @@ void setup()
   while (!Serial)
     ; // Wait for Serial to become available. Is optimized away for some cores.
   Serial.println("BLUE test starting");
-  BLEDevice::init("Long name works now");
+  BLEDevice::init("BLE test suite");
 
   // Create the BLE Server
   pServer = BLEDevice::createServer();
@@ -51,6 +79,8 @@ void setup()
           BLECharacteristic::PROPERTY_WRITE |
           BLECharacteristic::PROPERTY_NOTIFY |
           BLECharacteristic::PROPERTY_INDICATE);
+
+  pCharacteristic->setCallbacks(new MyCallbacks());
 
   // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
   // Create a BLE Descriptor
@@ -70,7 +100,7 @@ void setup()
 
 void loop()
 {
-  Serial.println("loop");
+  // Serial.println("loop");
 
   // notify changed value
   if (deviceConnected)
