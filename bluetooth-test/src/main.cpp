@@ -98,12 +98,37 @@ void setup()
   Serial.println("Waiting a client connection to notify...");
 }
 
+bool value_to_send = false;
+
+/*
+we send in a 5 slot array via some given charac
+
+0 = the current configured type that is sending [1 = helmet, 2 = gun].
+2 = the id of this type. ie helmet 8 would be 8.
+3 = the key that this is targeting. [1 = shot fired, 2 = shot recieved].
+4 = the value of the previous key [if i recieved a shot from gun with id 66, then the value would be 66].
+5 = always 0.
+
+example
+[1,3,2,23,0] - i am HELMET 3, i have been shot by gun 23
+[2,23,1,0,0] - i am GUN 23, I have fired a shot
+
+
+*/
+
+uint32_t next_package[5] = {0};
+
+void send_value()
+{
+  next_package[0] = 12;
+  value_to_send = true;
+}
+
 void loop()
 {
-  // Serial.println("loop");
 
   // notify changed value
-  if (deviceConnected)
+  if (deviceConnected && value_to_send)
   {
     Serial.print("sending notiicaiton with value:");
     Serial.println(value);
@@ -133,4 +158,6 @@ void loop()
     // do stuff here on connecting
     oldDeviceConnected = deviceConnected;
   }
+  next_package[5] = {0};
+  value_to_send = false;
 }
