@@ -28,9 +28,9 @@ class MyServerCallbacks : public BLEServerCallbacks
   }
 };
 
-uint32_t value = 69;
+uint32_t health_tick_value = 69;
 
-class MyCallbacks : public BLECharacteristicCallbacks
+class pCharacteristicCallbacks : public BLECharacteristicCallbacks
 {
   void onWrite(BLECharacteristic *pCharacteristic)
   {
@@ -46,7 +46,7 @@ class MyCallbacks : public BLECharacteristicCallbacks
       if (i == 0)
       {
         Serial.print("setting value to:");
-        value = (uint32_t)recievedValue[i];
+        health_tick_value = (uint32_t)recievedValue[i];
       }
 
       Serial.print((uint32_t)recievedValue[i]);
@@ -80,7 +80,7 @@ void setup()
           BLECharacteristic::PROPERTY_NOTIFY |
           BLECharacteristic::PROPERTY_INDICATE);
 
-  pCharacteristic->setCallbacks(new MyCallbacks());
+  pCharacteristic->setCallbacks(new pCharacteristicCallbacks());
 
   // https://www.bluetooth.com/specifications/gatt/viewer?attributeXmlFile=org.bluetooth.descriptor.gatt.client_characteristic_configuration.xml
   // Create a BLE Descriptor
@@ -103,7 +103,7 @@ bool value_to_send = false;
 /*
 we send in a 5 slot array via some given charac
 
-0 = the current configured type that is sending [1 = helmet, 2 = gun].
+0 = the current configured type that is sending [1 = helmet, 2 = gun, 255 = diganostic].
 2 = the id of this type. ie helmet 8 would be 8.
 3 = the key that this is targeting. [1 = shot fired, 2 = shot recieved].
 4 = the value of the previous key [if i recieved a shot from gun with id 66, then the value would be 66].
@@ -124,26 +124,28 @@ void send_value()
   value_to_send = true;
 }
 
-void loop()
+void sendArrayViaBLE(uint32_t *dataArray)
 {
+  // Calculate the total number of bytes required
+  size_t arraySize = sizeof(dataArray) / sizeof(dataArray[0]);
+  size_t dataSize = arraySize * sizeof(uint32_t);
 
-  // notify changed value
-  if (deviceConnected && value_to_send)
-  {
-    Serial.print("sending notiicaiton with value:");
-    Serial.println(value);
+  // Allocate a buffer to hold the data
+  uint8_t *dataBuffer = new uint8_t[dataSize];
 
-    pCharacteristic->setValue((uint8_t *)&value, 4);
-    pCharacteristic->notify();
-    value++;
-    if (value > 99)
-    {
-      value = 1;
-    }
+  // Copy the array into the buffer
+  memcpy(dataBuffer, dataArray, dataSize);
 
-    // delay(3); // bluetooth stack will go into congestion, if too many packets are sent, in 6 hours test i was able to go as low as 3ms
-    delay(1000);
-  }
+  // Call BLECharacteristic::setValue with the buffer and size
+  pCharacteristic->setValue(dataBuffer, dataSize);
+  pCharacteristic->notify(); // Notify connected devices (if desired)
+
+  // Clean up the allocated buffer
+  delete[] dataBuffer;
+}
+
+void handle_connections()
+{
   // disconnecting
   if (!deviceConnected && oldDeviceConnected)
   {
@@ -158,6 +160,55 @@ void loop()
     // do stuff here on connecting
     oldDeviceConnected = deviceConnected;
   }
-  next_package[5] = {0};
-  value_to_send = false;
+}
+
+void health_tick()
+{
+  Serial.print("Sending health tick value:");
+  Serial.println(health_tick_value);
+
+  // Example array of uint32_t values
+  uint32_t dataArray[5] = {
+      health_tick_value,
+      0,
+      0,
+      0,
+      health_tick_value,
+  };
+
+  // Send the array via BLE
+  sendArrayViaBLE(dataArray);
+
+  // pCharacteristic->setValue((uint8_t *)&health_tick_value, 4);
+  // pCharacteristic->notify();
+
+  health_tick_value++;
+  if (health_tick_value > 99)
+  {
+    health_tick_value = 1;
+  }
+}
+
+int l = 0;
+void loop()
+{
+  l++;
+
+  // notify changed value
+  if (deviceConnected)
+  {
+    Serial.println("device connected");
+    Serial.println(l);
+    health_tick();
+
+    // delay(3); // bluetooth stack will go into congestion, if too many packets are sent, in 6 hours test i was able to go as low as 3ms
+    delay(1000);
+  }
+  handle_connections();
+  if (value_to_send)
+  {
+
+    next_package[5] = {0};
+    value_to_send = false;
+  }
 }
