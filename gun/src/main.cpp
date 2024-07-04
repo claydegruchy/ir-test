@@ -5,6 +5,7 @@
 #include <BLEUtils.h>
 
 #include "health_check.h"
+#include "gun.h"
 
 #define SERVICE_UUID "0000180f-0000-1000-8000-00805f9b34fb"
 
@@ -49,6 +50,7 @@ void setup()
   // Create the BLE Service
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
+  gun_setup(pService);
   health_setup(pService);
 
   // Start the service
@@ -93,6 +95,7 @@ void loop()
     Serial.println("[MAIN]  device connected");
     Serial.println(l);
     health_tick();
+    gun_tick();
 
     // delay(3); // bluetooth stack will go into congestion, if too many packets
     // are sent, in 6 hours test i was able to go as low as 3ms

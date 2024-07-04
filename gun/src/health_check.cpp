@@ -78,6 +78,7 @@ void health_tick()
 
   pCharacteristic->setValue((uint8_t *)&health_tick_value, 4);
   pCharacteristic->notify(); // Notify connected devices (if desired)
+  delay(5);                  // this prevent flooding of the BLE connection
 
   health_tick_value++;
   if (health_tick_value > 99)
