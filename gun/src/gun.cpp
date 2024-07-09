@@ -80,38 +80,80 @@ class configurationCharacteristicCallbacks : public BLECharacteristicCallbacks {
 
     std::string value = configurationCharacteristicCallbacks->getValue();
 
-  // Step 2: Convert string to byte array
-  std::vector<uint8_t> byteData(value.begin(), value.end());
+    // Step 2: Convert string to byte array
+    std::vector<uint8_t> byteData(value.begin(), value.end());
 
-  // Step 3: Interpret byte array as Uint16Array
-  size_t numValues = byteData.size() / 2; // Number of Uint16 values
-  std::vector<uint16_t> values(numValues);
+    // Step 3: Interpret byte array as Uint16Array
+    size_t numValues = byteData.size() / 2; // Number of Uint16 values
+    std::vector<uint16_t> values(numValues);
 
-  for (size_t i = 0; i < numValues; ++i) {
-    // Combine two bytes into a Uint16 value (assuming little-endian)
-    values[i] = byteData[i * 2] | (byteData[i * 2 + 1] << 8);
-  }
+    for (size_t i = 0; i < numValues; ++i) {
+      // Combine two bytes into a Uint16 value (assuming little-endian)
+      values[i] = byteData[i * 2] | (byteData[i * 2 + 1] << 8);
+    }
 
-  // Step 4: Print each value in the `values` array
-  for (size_t i = 0; i < values.size(); ++i) {
-    Serial.print("Value ");
-    Serial.print(i);
-    Serial.print(": ");
-    Serial.println(values[i]);
-  }
+    Serial.print("Total size of values:");
+    Serial.println(values.size());
 
-    // Print the received bytes. this works great with strings
-    //   Serial.print("Received Value: ");
+    Serial.print("[config] [gun_enabled]");
+    if (gun_enabled != values[0]) {
+      Serial.print("updating ");
+      Serial.print(gun_enabled);
+      Serial.print(" to ");
+      Serial.println(values[0]);
+      gun_enabled = values[0];
+    } else {
+      Serial.print("skipping. currently:");
+      Serial.println(gun_enabled);
+    }
 
-    //   if (value.length() > 0) {
-    //     Serial.println("*********");
-    //     Serial.print("New value: ");
-    //     for (int i = 0; i < value.length(); i++)
-    //       Serial.print(value[i]);
+    Serial.print("[config] [debug_auto_shoot]");
+    if (debug_auto_shoot != values[1]) {
+      Serial.print("updating ");
+      Serial.print(debug_auto_shoot);
+      Serial.print(" to ");
+      Serial.println(values[1]);
+      debug_auto_shoot = values[1];
+    } else {
+      Serial.print("skipping. currently:");
+      Serial.println(debug_auto_shoot);
+    }
 
-    //     Serial.println();
-    //     Serial.println("*********");
-    //   }
+    Serial.print("[config] [max_clip_size]");
+    if (max_clip_size != values[2]) {
+      Serial.print("updating ");
+      Serial.print(max_clip_size);
+      Serial.print(" to ");
+      Serial.println(values[2]);
+      max_clip_size = values[2];
+    } else {
+      Serial.print("skipping. currently:");
+      Serial.println(max_clip_size);
+    }
+
+    Serial.print("[config] [fire_shot_cooldown_max]");
+    if (fire_shot_cooldown_max != values[3]) {
+      Serial.print("updating ");
+      Serial.print(fire_shot_cooldown_max);
+      Serial.print(" to ");
+      Serial.println(values[3]);
+      fire_shot_cooldown_max = values[3];
+    } else {
+      Serial.print("skipping. currently:");
+      Serial.println(fire_shot_cooldown_max);
+    }
+
+    Serial.print("[config] [reload_cooldown_max]");
+    if (reload_cooldown_max != values[4]) {
+      Serial.print("updating ");
+      Serial.print(reload_cooldown_max);
+      Serial.print(" to ");
+      Serial.println(values[4]);
+      reload_cooldown_max = values[4];
+    } else {
+      Serial.print("skipping. currently:");
+      Serial.println(reload_cooldown_max);
+    }
   }
 };
 
