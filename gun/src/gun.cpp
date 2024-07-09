@@ -24,12 +24,10 @@ sends a health signal every big loop
 #define CHARACTERISTIC_UUID_RELOAD "2002a0b9-6aa4-40aa-a2bd-de02c8ec4e04"
 #define CHARACTERISTIC_UUID_CONFIGURATION "0fa0e6c8-f586-4c84-a431-2862275808e2"
 
-// CON
+// CONFIGS
 bool gun_enabled = true;
 bool debug_auto_shoot = true;
-
 uint32_t max_clip_size = 12;
-
 uint32_t fire_shot_cooldown_max = 1000 / 10;
 uint32_t reload_cooldown_max = 1000;
 
@@ -80,15 +78,40 @@ class configurationCharacteristicCallbacks : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *configurationCharacteristicCallbacks) {
     Serial.println("[GUN]  [configurationCharacteristicCallbacks] write: ");
 
-    std::string recievedValue =
-        configurationCharacteristicCallbacks->getValue();
-    // Print the received bytes
-    Serial.print("Received Value: ");
-    for (int i = 0; i < recievedValue.length(); i++) {
-      Serial.print((uint32_t)recievedValue[i]);
-      Serial.print(" ");
-    }
-    Serial.println();
+    std::string value = configurationCharacteristicCallbacks->getValue();
+
+  // Step 2: Convert string to byte array
+  std::vector<uint8_t> byteData(value.begin(), value.end());
+
+  // Step 3: Interpret byte array as Uint16Array
+  size_t numValues = byteData.size() / 2; // Number of Uint16 values
+  std::vector<uint16_t> values(numValues);
+
+  for (size_t i = 0; i < numValues; ++i) {
+    // Combine two bytes into a Uint16 value (assuming little-endian)
+    values[i] = byteData[i * 2] | (byteData[i * 2 + 1] << 8);
+  }
+
+  // Step 4: Print each value in the `values` array
+  for (size_t i = 0; i < values.size(); ++i) {
+    Serial.print("Value ");
+    Serial.print(i);
+    Serial.print(": ");
+    Serial.println(values[i]);
+  }
+
+    // Print the received bytes. this works great with strings
+    //   Serial.print("Received Value: ");
+
+    //   if (value.length() > 0) {
+    //     Serial.println("*********");
+    //     Serial.print("New value: ");
+    //     for (int i = 0; i < value.length(); i++)
+    //       Serial.print(value[i]);
+
+    //     Serial.println();
+    //     Serial.println("*********");
+    //   }
   }
 };
 
