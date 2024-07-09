@@ -22,7 +22,7 @@ sends a health signal every big loop
 
 #define CHARACTERISTIC_UUID_SHOT_FIRED "ecc24e5d-0d95-4111-aa0a-6e40a76b8d74"
 #define CHARACTERISTIC_UUID_RELOAD "2002a0b9-6aa4-40aa-a2bd-de02c8ec4e04"
-#define CHARACTERISTIC_UUID_CONFIGURATION "2002a0b9-6aa4-40aa-a2bd-de02c8ec4e04"
+#define CHARACTERISTIC_UUID_CONFIGURATION "0fa0e6c8-f586-4c84-a431-2862275808e2"
 
 // CON
 bool gun_enabled = true;
