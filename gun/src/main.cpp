@@ -4,13 +4,15 @@
 #include <BLEServer.h>
 #include <BLEUtils.h>
 
+#define DEVICE_ID "2"
+#define DEVICE_TYPE "GUN"
+
+#define HEALTH_CHECK_FREQUENCY 1000
+
 #include "gun.h"
 #include "health_check.h"
 
 #define SERVICE_UUID "0000180f-0000-1000-8000-00805f9b34fb"
-
-#define DEVICE_ID "2"
-#define DEVICE_TYPE "GUN"
 
 String device_name = String(DEVICE_TYPE) + String(DEVICE_ID);
 
@@ -83,18 +85,10 @@ void loop() {
 
   // notify changed value
   if (deviceConnected) {
-    if (l % 1000 == 0) {
-      Serial.println("[MAIN]  device connected");
-    }
-    if (l % 1000 == 0) {
-      Serial.println(l);
+    if (l % HEALTH_CHECK_FREQUENCY == 0) {
       health_tick();
     }
-    if (l % 300 == 0) {
-      Serial.println("[MAIN]  running firing test");
-      Serial.println(l);
-      gun_tick();
-    }
+    gun_tick();
 
     // delay(3); // bluetooth stack will go into congestion, if too many
     // packets are sent, in 6 hours test i was able to go as low as 3ms
