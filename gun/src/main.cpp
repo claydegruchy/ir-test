@@ -88,7 +88,7 @@ void loop() {
     if (l % HEALTH_CHECK_FREQUENCY == 0) {
       health_tick();
     }
-    gun_tick();
+    gun_tick(l);
 
     // delay(3); // bluetooth stack will go into congestion, if too many
     // packets are sent, in 6 hours test i was able to go as low as 3ms

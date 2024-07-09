@@ -25,19 +25,23 @@ sends a health signal every big loop
 #define CHARACTERISTIC_UUID_CONFIGURATION "2002a0b9-6aa4-40aa-a2bd-de02c8ec4e04"
 
 // CON
-uint32_t shots_fired = 0;
-
-uint32_t max_clip_size = 50;
-uint32_t current_clip_size = 5;
-
-// COOLDOWN HANDLERS
-int fire_shot_cooldown_max = 1000 / 10;
-int fire_shot_cooldown_remaining = 0;
-
 bool gun_enabled = true;
+bool debug_auto_shoot = true;
+
+uint32_t max_clip_size = 12;
+
+uint32_t fire_shot_cooldown_max = 1000 / 10;
+uint32_t reload_cooldown_max = 1000;
+
+// ephemerals/HANDLERS
+uint32_t current_clip_size = 0;
+uint32_t shots_fired = 0;
+uint32_t fire_shot_cooldown_remaining = 0;
+uint32_t reload_cooldown_remaining = 0;
 
 BLECharacteristic *shotFiredCharacteristic = NULL;
 BLECharacteristic *reloadPressedCharacteristic = NULL;
+BLECharacteristic *configurationCharacteristic = NULL;
 
 class shotFiredCharacteristicCallbacks : public BLECharacteristicCallbacks {};
 class reloadPressedCharacteristicCallbacks : public BLECharacteristicCallbacks {
@@ -67,6 +71,27 @@ class reloadPressedCharacteristicCallbacks : public BLECharacteristicCallbacks {
   }
 };
 
+class configurationCharacteristicCallbacks : public BLECharacteristicCallbacks {
+  void onRead(BLECharacteristic *configurationCharacteristicCallbacks) {
+    Serial.println("[GUN]  [configurationCharacteristicCallbacks] read: ");
+    String val = "val for config callback";
+    configurationCharacteristicCallbacks->setValue(val.c_str());
+  }
+  void onWrite(BLECharacteristic *configurationCharacteristicCallbacks) {
+    Serial.println("[GUN]  [configurationCharacteristicCallbacks] write: ");
+
+    std::string recievedValue =
+        configurationCharacteristicCallbacks->getValue();
+    // Print the received bytes
+    Serial.print("Received Value: ");
+    for (int i = 0; i < recievedValue.length(); i++) {
+      Serial.print((uint32_t)recievedValue[i]);
+      Serial.print(" ");
+    }
+    Serial.println();
+  }
+};
+
 void gun_setup(BLEService *pService) {
   Serial.println("[GUN]  Running GUN_SETUP");
 
@@ -83,7 +108,7 @@ void gun_setup(BLEService *pService) {
   shotFiredCharacteristic->addDescriptor(new BLE2902());
 
   Serial.println("[GUN]  establishing reloadPressedCharacteristic");
-  // Create a BLE Characteristic FOR THE GUNSHOT
+  // Create a BLE Characteristic FOR THE RELOAD
   reloadPressedCharacteristic = pService->createCharacteristic(
       CHARACTERISTIC_UUID_RELOAD, BLECharacteristic::PROPERTY_READ |
                                       BLECharacteristic::PROPERTY_NOTIFY |
@@ -94,6 +119,18 @@ void gun_setup(BLEService *pService) {
 
   // Create a BLE Descriptor
   reloadPressedCharacteristic->addDescriptor(new BLE2902());
+
+  Serial.println("[GUN]  establishing configurationCharacteristic");
+  // Create a BLE Characteristic FOR CONFIGURATION
+  configurationCharacteristic = pService->createCharacteristic(
+      CHARACTERISTIC_UUID_CONFIGURATION,
+      BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
+
+  configurationCharacteristic->setCallbacks(
+      new configurationCharacteristicCallbacks());
+
+  // Create a BLE Descriptor
+  configurationCharacteristic->addDescriptor(new BLE2902());
 
   Serial.println("[GUN]  setting pinmode for IR system");
 
@@ -148,9 +185,6 @@ void fire_gun() {
   fire_shot_cooldown_remaining -= 5; // dont make the user pay a tax for bt lag
 }
 
-int reload_cooldown_max = 1000;
-int reload_cooldown_remaining = 0;
-
 void reload_gun() {
   Serial.println("[GUN]  [reload_gun] reloading");
   if (reload_cooldown_remaining > 0) {
@@ -173,11 +207,20 @@ void reload_gun() {
 bool previous_trigger_pin_state = 1;
 bool previous_reload_pin_state = 1;
 
-void gun_tick() {
+void gun_tick(int tick = -1) {
   // Serial.println("[GUN]  [gun_tick] Running gun_tick");
   if (!gun_enabled) {
     Serial.println("[GUN]  [gun_tick] gun not enabled. skipping");
     return;
+  }
+
+  if (debug_auto_shoot && tick % 1000 == 0) {
+    Serial.println("[GUN]  [gun_tick] debug auto fire enabled");
+    fire_gun();
+    if (current_clip_size <= 0) {
+      Serial.println("[GUN]  [gun_tick] debug auto reload enabled");
+      reload_gun();
+    }
   }
 
   int trigger_pin_state = digitalRead(TRIGGER_PIN);
@@ -197,10 +240,8 @@ void gun_tick() {
 
   // fire_gun();
 
-  // if (current_clip_size <= 0) {
-  //   Serial.println("[GUN]  [gun_tick] out of ammo, reloading...");
-  //   reload_gun();
-  // }
+  // fire_gun();
+  // delay(500);
 
   if (fire_shot_cooldown_remaining > 0)
     fire_shot_cooldown_remaining -= 1;
