@@ -240,7 +240,15 @@ void fire_gun() {
   fire_shot_cooldown_remaining = fire_shot_cooldown_max;
 
   // actually send the IR
+
+  unsigned long start = micros();
+
   send_ir_signal();
+
+  // Compute the time it took
+  unsigned long end = micros();
+  unsigned long delta = end - start;
+  Serial.println(delta);
 
   // tell the phone about it
   // Serial.println("[GUN]  [fire_gun]  sending ble communication ");
@@ -279,7 +287,8 @@ void gun_tick(int tick = -1) {
     return;
   }
 
-  if (debug_auto_shoot && tick % 1000 == 0) {
+  if (debug_auto_shoot && tick % fire_shot_cooldown_max == 0) {
+
     Serial.println("[GUN]  [gun_tick] debug auto fire enabled");
     fire_gun();
     if (current_clip_size <= 0) {
@@ -302,11 +311,6 @@ void gun_tick(int tick = -1) {
     // Serial.println(reload_pin_state);
     reload_gun();
   }
-
-  // fire_gun();
-
-  // fire_gun();
-  // delay(500);
 
   if (fire_shot_cooldown_remaining > 0)
     fire_shot_cooldown_remaining -= 1;
