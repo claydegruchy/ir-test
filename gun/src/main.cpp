@@ -4,13 +4,15 @@
 #include <BLEServer.h>
 #include <BLEUtils.h>
 
-#include "health_check.h"
+#define DEVICE_ID "2"
+#define DEVICE_TYPE "GUN"
+
+#define HEALTH_CHECK_FREQUENCY 1000
+
 #include "gun.h"
+#include "health_check.h"
 
 #define SERVICE_UUID "0000180f-0000-1000-8000-00805f9b34fb"
-
-#define DEVICE_ID "1"
-#define DEVICE_TYPE "GUN"
 
 String device_name = String(DEVICE_TYPE) + String(DEVICE_ID);
 
@@ -18,23 +20,19 @@ BLEServer *pServer = NULL;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 
-class ServerCallbacks : public BLEServerCallbacks
-{
-  void onConnect(BLEServer *pServer)
-  {
+class ServerCallbacks : public BLEServerCallbacks {
+  void onConnect(BLEServer *pServer) {
     Serial.println("[MAIN]  Device connected");
     deviceConnected = true;
   };
 
-  void onDisconnect(BLEServer *pServer)
-  {
+  void onDisconnect(BLEServer *pServer) {
     Serial.println("[MAIN]  Device disconnected");
     deviceConnected = false;
   }
 };
 
-void setup()
-{
+void setup() {
   Serial.begin(115200);
   while (!Serial)
     ; // Wait for Serial to become available. Is optimized away for some cores.
@@ -66,40 +64,35 @@ void setup()
   Serial.println("[MAIN]  Waiting a client connection to notify...");
 }
 
-void handle_connections()
-{
+void handle_connections() {
   // disconnecting
-  if (!deviceConnected && oldDeviceConnected)
-  {
-    delay(500);                  // give the bluetooth stack the chance to get things ready
+  if (!deviceConnected && oldDeviceConnected) {
+    delay(500); // give the bluetooth stack the chance to get things ready
     pServer->startAdvertising(); // restart advertising
     Serial.println("[MAIN]  start advertising");
     oldDeviceConnected = deviceConnected;
   }
   // connecting
-  if (deviceConnected && !oldDeviceConnected)
-  {
+  if (deviceConnected && !oldDeviceConnected) {
     // do stuff here on connecting
     oldDeviceConnected = deviceConnected;
   }
 }
 
 int l = 0;
-void loop()
-{
+void loop() {
   l++;
 
   // notify changed value
-  if (deviceConnected)
-  {
-    Serial.println("[MAIN]  device connected");
-    Serial.println(l);
-    health_tick();
-    gun_tick();
+  if (deviceConnected) {
+    if (l % HEALTH_CHECK_FREQUENCY == 0) {
+      health_tick();
+    }
+    gun_tick(l);
 
-    // delay(3); // bluetooth stack will go into congestion, if too many packets
-    // are sent, in 6 hours test i was able to go as low as 3ms
-    delay(1000);
+    // delay(3); // bluetooth stack will go into congestion, if too many
+    // packets are sent, in 6 hours test i was able to go as low as 3ms
   }
   handle_connections();
+  delay(1);
 }

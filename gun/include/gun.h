@@ -5,6 +5,6 @@
 #include <BLEServer.h>
 
 void gun_setup(BLEService *pService);
-void gun_tick();
+void gun_tick(int tick = -1);
 
 #endif
