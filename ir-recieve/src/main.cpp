@@ -1,14 +1,45 @@
+// test board mac address FC:E8:C0:7B:58:BC
+
 // #define USE_ONKYO_PROTOCOL    // Like NEC, but take the 16 bit address and command each as one 16 bit value and not as 8 bit normal and 8 bit inverted value.
 // #define USE_FAST_PROTOCOL // Use FAST protocol instead of NEC / ONKYO
 #define IR_RECEIVE_PIN 35
 // dont use pin 13 its fucked up
 #include "TinyIRReceiver.hpp"
 
+#include <WiFi.h>
+#include <esp_now.h>
+
+uint8_t broadcastAddress[] = {0x24, 0xDC, 0xC3, 0x45, 0x4A, 0x2C}; // Replace with receiver's MAC address
+int numberToSend = 666;
+
+void esp_now_setup()
+{
+  Serial.println("Running esp_now_setup");
+
+  WiFi.mode(WIFI_MODE_APSTA);
+  Serial.print("Board MAC Address:  ");
+  Serial.println(WiFi.macAddress());
+
+  esp_now_init(); // Initialize ESP-NOW
+
+  // Register peer
+  esp_now_peer_info_t peerInfo;
+  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+  peerInfo.channel = 0;
+  peerInfo.encrypt = false;
+
+  esp_now_add_peer(&peerInfo);
+  esp_now_send(broadcastAddress, (uint8_t *)&numberToSend, sizeof(numberToSend));
+  Serial.println("Finished esp_now_setup");
+}
+
 void setup()
 {
   Serial.begin(115200);
   while (!Serial)
     ; // Wait for Serial to become available. Is optimized away for some cores.
+
+  esp_now_setup();
 
   initPCIInterruptForTinyReceiver(); // Enables the interrupt generation on change of IR input signal
 
@@ -19,6 +50,13 @@ void setup()
 
 #endif
   Serial.println("Ready to receive");
+}
+
+void hit_recieved(uint8_t result)
+{
+  Serial.println("hit_recieved, sending to ESP NOW");
+
+  esp_now_send(broadcastAddress, (uint8_t *)&result, sizeof(result));
 }
 
 int i = 0;
@@ -38,8 +76,13 @@ void loop()
     Serial.print(TinyIRReceiverData.Command, HEX);
     if (TinyIRReceiverData.Flags == IRDATA_FLAGS_IS_REPEAT)
     {
-      Serial.print(F(" Repeat"));
+      Serial.println(F(" Repeat, skipping hit_recieved"));
     }
+    else
+    {
+      hit_recieved(TinyIRReceiverData.Command);
+    }
+
     if (TinyIRReceiverData.Flags == IRDATA_FLAGS_PARITY_FAILED)
     {
       Serial.print(F(" Parity failed"));
@@ -56,9 +99,12 @@ void loop()
   //   i = 0;
   // }
 
-  // if (i % 500 == 0)
+  // if (i % 100000 == 0)
   // {
+
   //   Serial.print("loop:");
   //   Serial.println(i);
+  //   numberToSend = i;
   // }
+  // i++;
 }
