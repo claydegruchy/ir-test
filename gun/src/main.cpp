@@ -6,7 +6,7 @@
 #include <BLEServer.h>
 #include <BLEUtils.h>
 
-#define DEVICE_ID "2"
+int DEVICE_ID = 2;
 #define DEVICE_TYPE "GUN"
 
 #define HEALTH_CHECK_FREQUENCY 1000
@@ -23,23 +23,19 @@ BLEServer *pServer = NULL;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 
-class ServerCallbacks : public BLEServerCallbacks
-{
-  void onConnect(BLEServer *pServer)
-  {
+class ServerCallbacks : public BLEServerCallbacks {
+  void onConnect(BLEServer *pServer) {
     Serial.println("[MAIN]  Device connected");
     deviceConnected = true;
   };
 
-  void onDisconnect(BLEServer *pServer)
-  {
+  void onDisconnect(BLEServer *pServer) {
     Serial.println("[MAIN]  Device disconnected");
     deviceConnected = false;
   }
 };
 
-void setup()
-{
+void setup() {
   Serial.begin(115200);
   while (!Serial)
     ; // Wait for Serial to become available. Is optimized away for some cores.
@@ -55,9 +51,9 @@ void setup()
   // Create the BLE Service
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
+  player_health_setup(pService);
   gun_setup(pService);
   health_setup(pService);
-  player_health_setup(pService);
 
   // Start the service
   pService->start();
@@ -72,34 +68,28 @@ void setup()
   Serial.println("[MAIN]  Waiting a client connection to notify...");
 }
 
-void handle_connections()
-{
+void handle_connections() {
   // disconnecting
-  if (!deviceConnected && oldDeviceConnected)
-  {
-    delay(500);                  // give the bluetooth stack the chance to get things ready
+  if (!deviceConnected && oldDeviceConnected) {
+    delay(500); // give the bluetooth stack the chance to get things ready
     pServer->startAdvertising(); // restart advertising
     Serial.println("[MAIN]  start advertising");
     oldDeviceConnected = deviceConnected;
   }
   // connecting
-  if (deviceConnected && !oldDeviceConnected)
-  {
+  if (deviceConnected && !oldDeviceConnected) {
     // do stuff here on connecting
     oldDeviceConnected = deviceConnected;
   }
 }
 
 int l = 0;
-void loop()
-{
+void loop() {
   l++;
 
   // notify changed value
-  if (deviceConnected)
-  {
-    if (l % HEALTH_CHECK_FREQUENCY == 0)
-    {
+  if (deviceConnected) {
+    if (l % HEALTH_CHECK_FREQUENCY == 0) {
       health_tick();
     }
     gun_tick(l);
@@ -109,6 +99,7 @@ void loop()
   }
   // temp for ir testingh
   // gun_tick(l);
+  player_health_tick(l);
 
   handle_connections();
   delay(1);

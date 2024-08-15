@@ -1,7 +1,8 @@
 // test board mac address FC:E8:C0:7B:58:BC
 
-// #define USE_ONKYO_PROTOCOL    // Like NEC, but take the 16 bit address and command each as one 16 bit value and not as 8 bit normal and 8 bit inverted value.
-// #define USE_FAST_PROTOCOL // Use FAST protocol instead of NEC / ONKYO
+// #define USE_ONKYO_PROTOCOL    // Like NEC, but take the 16 bit address and
+// command each as one 16 bit value and not as 8 bit normal and 8 bit inverted
+// value. #define USE_FAST_PROTOCOL // Use FAST protocol instead of NEC / ONKYO
 #define IR_RECEIVE_PIN 35
 // dont use pin 13 its fucked up
 #include "TinyIRReceiver.hpp"
@@ -9,11 +10,17 @@
 #include <WiFi.h>
 #include <esp_now.h>
 
-uint8_t broadcastAddress[] = {0x24, 0xDC, 0xC3, 0x45, 0x4A, 0x2C}; // Replace with receiver's MAC address
-int numberToSend = 666;
+#define DEVICE_ID 20
 
-void esp_now_setup()
-{
+uint8_t broadcastAddress[] = {
+    0x24, 0xDC, 0xC3, 0x45, 0x4A, 0x2C}; // Replace with receiver's MAC address
+
+struct ESPNowData {
+  int val;
+  int id;
+};
+
+void esp_now_setup() {
   Serial.println("Running esp_now_setup");
 
   WiFi.mode(WIFI_MODE_APSTA);
@@ -29,19 +36,18 @@ void esp_now_setup()
   peerInfo.encrypt = false;
 
   esp_now_add_peer(&peerInfo);
-  esp_now_send(broadcastAddress, (uint8_t *)&numberToSend, sizeof(numberToSend));
   Serial.println("Finished esp_now_setup");
 }
 
-void setup()
-{
+void setup() {
   Serial.begin(115200);
   while (!Serial)
     ; // Wait for Serial to become available. Is optimized away for some cores.
 
   esp_now_setup();
 
-  initPCIInterruptForTinyReceiver(); // Enables the interrupt generation on change of IR input signal
+  initPCIInterruptForTinyReceiver(); // Enables the interrupt generation on
+                                     // change of IR input signal
 
 #if defined(USE_FAST_PROTOCOL)
   Serial.print("Using FAST: ");
@@ -52,18 +58,19 @@ void setup()
   Serial.println("Ready to receive");
 }
 
-void hit_recieved(uint8_t result)
-{
+void hit_recieved(uint8_t result) {
   Serial.println("hit_recieved, sending to ESP NOW");
 
-  esp_now_send(broadcastAddress, (uint8_t *)&result, sizeof(result));
+  ESPNowData data;
+  data.val = result;
+  data.id = DEVICE_ID;
+
+  esp_now_send(broadcastAddress, (uint8_t *)&data, sizeof(data));
 }
 
 int i = 0;
-void loop()
-{
-  if (TinyIRReceiverData.justWritten)
-  {
+void loop() {
+  if (TinyIRReceiverData.justWritten) {
     Serial.println("Got something");
     TinyIRReceiverData.justWritten = false;
 #if !defined(USE_FAST_PROTOCOL)
@@ -74,17 +81,13 @@ void loop()
 #endif
     Serial.print(F("Command=0x"));
     Serial.print(TinyIRReceiverData.Command, HEX);
-    if (TinyIRReceiverData.Flags == IRDATA_FLAGS_IS_REPEAT)
-    {
+    if (TinyIRReceiverData.Flags == IRDATA_FLAGS_IS_REPEAT) {
       Serial.println(F(" Repeat, skipping hit_recieved"));
-    }
-    else
-    {
+    } else {
       hit_recieved(TinyIRReceiverData.Command);
     }
 
-    if (TinyIRReceiverData.Flags == IRDATA_FLAGS_PARITY_FAILED)
-    {
+    if (TinyIRReceiverData.Flags == IRDATA_FLAGS_PARITY_FAILED) {
       Serial.print(F(" Parity failed"));
 #if !defined(USE_EXTENDED_NEC_PROTOCOL) && !defined(USE_ONKYO_PROTOCOL)
       Serial.print(F(", try USE_EXTENDED_NEC_PROTOCOL or USE_ONKYO_PROTOCOL"));

@@ -4,10 +4,11 @@
 #include <WiFi.h>
 #include <esp_now.h>
 
+#include <BLE2902.h>
 #include <BLEDevice.h>
 #include <BLEServer.h>
-#include <BLE2902.h>
 
 void player_health_setup(BLEService *pService);
+void player_health_tick(int loopNumber);
 
 #endif
