@@ -209,7 +209,7 @@ void gun_setup(BLEService *pService) {
 void send_ir_signal() {
   // Serial.println("[GUN]  [send_ir_signal]  sending ir signal ");
   // Serial.flush();
-  sendNEC(IR_SEND_PIN, 0, DEVICE_ID,
+  sendNEC(IR_SEND_PIN, 0, 11,
           2); // Send address 0 and command 11 on pin 3 with 2 repeats.
 }
 
