@@ -9,6 +9,7 @@ sends a health signal every big loop
 
  */
 
+#include "globals.h"
 #include "health_check.h"
 
 #include <BLE2902.h>
@@ -41,6 +42,7 @@ BLECharacteristic *reloadPressedCharacteristic = NULL;
 BLECharacteristic *configurationCharacteristic = NULL;
 
 class shotFiredCharacteristicCallbacks : public BLECharacteristicCallbacks {};
+
 class reloadPressedCharacteristicCallbacks : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *reloadPressedCharacteristic) {
     Serial.println("[GUN]  [reloadPressedCharacteristicCallbacks] write: ");
@@ -72,7 +74,16 @@ class configurationCharacteristicCallbacks : public BLECharacteristicCallbacks {
   void onRead(BLECharacteristic *configurationCharacteristicCallbacks) {
     Serial.println("[GUN]  [configurationCharacteristicCallbacks] read: ");
     String val = "val for config callback";
-    configurationCharacteristicCallbacks->setValue(val.c_str());
+
+    int config[] = {
+        gun_enabled,         debug_auto_shoot,
+        max_clip_size,       fire_shot_cooldown_max,
+        reload_cooldown_max,
+
+    };
+
+    configurationCharacteristicCallbacks->setValue((uint8_t *)&config,
+                                                   sizeof(config));
   }
   void onWrite(BLECharacteristic *configurationCharacteristicCallbacks) {
     Serial.println("[GUN]  [configurationCharacteristicCallbacks] write: ");
@@ -209,7 +220,7 @@ void gun_setup(BLEService *pService) {
 void send_ir_signal() {
   // Serial.println("[GUN]  [send_ir_signal]  sending ir signal ");
   // Serial.flush();
-  sendNEC(IR_SEND_PIN, 0, 11,
+  sendNEC(IR_SEND_PIN, 0, DEVICE_ID,
           2); // Send address 0 and command 11 on pin 3 with 2 repeats.
 }
 

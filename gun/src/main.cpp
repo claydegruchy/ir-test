@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <BLE2902.h>
 // #include <BLEDevice.h>
+#include "globals.h"
 #include <BLEServer.h>
 #include <BLEUtils.h>
 
@@ -51,9 +52,9 @@ void setup() {
   // Create the BLE Service
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
+  health_setup(pService);
   player_health_setup(pService);
   gun_setup(pService);
-  health_setup(pService);
 
   // Start the service
   pService->start();
@@ -99,7 +100,7 @@ void loop() {
   }
   // temp for ir testingh
   // gun_tick(l);
-  player_health_tick(l);
+  // player_health_tick(l);
 
   handle_connections();
   delay(1);
