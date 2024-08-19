@@ -73,12 +73,13 @@ class reloadPressedCharacteristicCallbacks : public BLECharacteristicCallbacks {
 class configurationCharacteristicCallbacks : public BLECharacteristicCallbacks {
   void onRead(BLECharacteristic *configurationCharacteristicCallbacks) {
     Serial.println("[GUN]  [configurationCharacteristicCallbacks] read: ");
-    String val = "val for config callback";
 
-    int config[] = {
-        gun_enabled,         debug_auto_shoot,
-        max_clip_size,       fire_shot_cooldown_max,
-        reload_cooldown_max,
+    int config[] = {gun_enabled,
+                    debug_auto_shoot,
+                    max_clip_size,
+                    fire_shot_cooldown_max,
+                    reload_cooldown_max,
+                    DEVICE_ID
 
     };
 
@@ -163,6 +164,18 @@ class configurationCharacteristicCallbacks : public BLECharacteristicCallbacks {
     } else {
       Serial.print("skipping. currently:");
       Serial.println(reload_cooldown_max);
+    }
+
+    Serial.print("[config] [DEVICE_ID]");
+    if (DEVICE_ID != values[5]) {
+      Serial.print("updating ");
+      Serial.print(DEVICE_ID);
+      Serial.print(" to ");
+      Serial.println(values[5]);
+      DEVICE_ID = values[5];
+    } else {
+      Serial.print("skipping. currently:");
+      Serial.println(DEVICE_ID);
     }
   }
 };
