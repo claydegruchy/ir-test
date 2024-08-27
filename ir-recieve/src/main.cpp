@@ -1,4 +1,6 @@
-// test board mac address FC:E8:C0:7B:58:BC
+// IR RECIVER board mac address FC:E8:C0:7B:58:BC
+// IR SENDER board mac address 24:DC:C3:45:4A:2C
+
 
 // #define USE_ONKYO_PROTOCOL    // Like NEC, but take the 16 bit address and
 // command each as one 16 bit value and not as 8 bit normal and 8 bit inverted
@@ -13,9 +15,13 @@
 #define DEVICE_ID 20
 
 uint8_t broadcastAddress[] = {
-    0x24, 0xDC, 0xC3, 0x45, 0x4A, 0x2C}; // Replace with receiver's MAC address
+  
+    0x24, 0xDC, 0xC3, 0x45, 0x4A, 0x2C
+    // 0x24, 0xDC, 0xC3, 0x45, 0x4A, 0x2C
+    }; // Replace with receiver's MAC address
 
-struct ESPNowData {
+struct ESPNowSignal {
+  // int sig;
   int val;
   int id;
 };
@@ -43,7 +49,7 @@ void setup() {
   Serial.begin(115200);
   while (!Serial)
     ; // Wait for Serial to become available. Is optimized away for some cores.
-
+  Serial.println("Starting device...");
   esp_now_setup();
 
   initPCIInterruptForTinyReceiver(); // Enables the interrupt generation on
@@ -58,20 +64,40 @@ void setup() {
   Serial.println("Ready to receive");
 }
 
-void hit_recieved(uint8_t result) {
+void hit_recieved(uint8_t signature, uint8_t shooterId) {
+
   Serial.println("hit_recieved, sending to ESP NOW");
 
-  ESPNowData data;
-  data.val = result;
+  ESPNowSignal data;
+  data.val = shooterId;
+  // data.sig = signature;
   data.id = DEVICE_ID;
+  Serial.print("(signature: ");
+  Serial.println(signature);
+  Serial.print("(shooterId: ");
+  Serial.println(shooterId);
+  Serial.print("(DEVICE_ID: ");
+  Serial.println(DEVICE_ID);
+  Serial.print("(sizeof(data): ");
+  Serial.println(sizeof(data));
 
-  esp_now_send(broadcastAddress, (uint8_t *)&data, sizeof(data));
-}
-
-void decodeIRCommand(uint16_t command, uint8_t &shooterID, uint8_t &shotID) {
-  shooterID =
-      (command >> 8) & 0x7F; // Extract the upper 7 bits for the shooter ID
-  shotID = command & 0xFF;   // Extract the lower 8 bits for the shot ID
+  esp_err_t result =
+      esp_now_send(broadcastAddress, (uint8_t *)&data, sizeof(data));
+  if (result == ESP_OK)
+    Serial.println("SUCCESS:succeed ");
+  if (result == ESP_ERR_ESPNOW_NOT_INIT)
+    Serial.println("ERROR:ESPNOW is not initialized ");
+  if (result == ESP_ERR_ESPNOW_ARG)
+    Serial.println("ERROR:invalid argument ");
+  if (result == ESP_ERR_ESPNOW_INTERNAL)
+    Serial.println("ERROR:internal error ");
+  if (result == ESP_ERR_ESPNOW_NO_MEM)
+    Serial.println("ERROR:out of memory, when this happens, you can delay a "
+                   "while before sending the next data ");
+  if (result == ESP_ERR_ESPNOW_NOT_FOUND)
+    Serial.println("ERROR:peer is not found ");
+  if (result == ESP_ERR_ESPNOW_IF)
+    Serial.println("ERROR:current WiFi interface doesn't match that of peer");
 }
 
 int i = 0;
@@ -83,7 +109,6 @@ void loop() {
     // We have no address at FAST protocol
     Serial.print(F("Address=0x"));
     Serial.print(TinyIRReceiverData.Address, HEX);
-    hit_recieved(TinyIRReceiverData.Address);
     Serial.print(' ');
 #endif
     Serial.print(F("Command=0x"));
@@ -91,8 +116,10 @@ void loop() {
     if (TinyIRReceiverData.Flags == IRDATA_FLAGS_IS_REPEAT) {
       Serial.println(F(" Repeat, skipping hit_recieved"));
     } else {
+      // TinyIRReceiverData.Address
+      Serial.println();
 
-      hit_recieved(TinyIRReceiverData.Command);
+      hit_recieved(TinyIRReceiverData.Address, TinyIRReceiverData.Command);
     }
 
     if (TinyIRReceiverData.Flags == IRDATA_FLAGS_PARITY_FAILED) {
@@ -103,19 +130,4 @@ void loop() {
     }
     Serial.println();
   }
-
-  // i++;
-  // if (i > 9999)
-  // {
-  //   i = 0;
-  // }
-
-  // if (i % 100000 == 0)
-  // {
-
-  //   Serial.print("loop:");
-  //   Serial.println(i);
-  //   numberToSend = i;
-  // }
-  // i++;
 }

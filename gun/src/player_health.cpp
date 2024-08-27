@@ -13,7 +13,8 @@ int receivedNumber = 0;
 #define CHARACTERISTIC_UUID_SHOT_RECIEVED "d230d989-efbf-4658-967f-ed233b5c5c2b"
 BLECharacteristic *HitRegistrationCharacteristic = NULL;
 
-struct ESPNowData {
+struct ESPNowSignal {
+  // int sig;
   int val;
   int id;
 };
@@ -22,13 +23,14 @@ void onESPNowReceive(const uint8_t *mac, const uint8_t *incomingData, int len) {
   // we have been hit by something
   // memcpy(&receivedNumber, incomingData, sizeof(receivedNumber));
 
-  ESPNowData *data = (ESPNowData *)incomingData;
-  int id = data->id;
+  ESPNowSignal *data = (ESPNowSignal *)incomingData;
   int val = data->val;
+  // int sig = data->sig;
+  int id = data->id;
   // val = 200;
 
-  Serial.println("Received signal via ESP NOW: ");
-  Serial.printf("From recieving device: %d, Value: %d\n", id, val);
+  Serial.println("[PLAYER_HEALTH] Received signal via ESP NOW: ");
+  Serial.printf("[PLAYER_HEALTH] From recieving device: %d, Value: %d\n", id, val);
 
   int hitData[] = {val, id};
 

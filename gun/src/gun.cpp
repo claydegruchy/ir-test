@@ -37,7 +37,8 @@ uint32_t shots_fired = 0;
 uint32_t fire_shot_cooldown_remaining = 0;
 uint32_t reload_cooldown_remaining = 0;
 
-uint8_t shot_rotation_indicator = 0;
+// we want to keep this value quite high or we'll turn on tvs and projectors everywhere
+uint8_t shot_rotation_indicator = 244;
 
 BLECharacteristic *shotFiredCharacteristic = NULL;
 BLECharacteristic *reloadPressedCharacteristic = NULL;
@@ -233,7 +234,11 @@ void gun_setup(BLEService *pService) {
 }
 
 void send_ir_signal() {
-  // Serial.println("[GUN]  [send_ir_signal]  sending ir signal ");
+  Serial.print("[GUN]  [send_ir_signal]  sending ir signal ");
+  Serial.print(shot_rotation_indicator);
+  Serial.print(" ");
+  Serial.print(DEVICE_ID);
+  Serial.println();
   // Serial.flush();
   sendNEC(IR_SEND_PIN, shot_rotation_indicator, DEVICE_ID,
           2); // Send address 0 and command 11 on pin 3 with 2 repeats.
@@ -268,9 +273,9 @@ void fire_gun() {
 
   unsigned long start = micros();
 
-  if (shot_rotation_indicator > 254) {
-    shot_rotation_indicator = 1;
-  }
+  shot_rotation_indicator++;
+  if (shot_rotation_indicator > 254)
+    shot_rotation_indicator = 244;
 
   send_ir_signal();
 
