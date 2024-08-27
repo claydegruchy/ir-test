@@ -2,7 +2,7 @@
 
 // #define USE_ONKYO_PROTOCOL    // Like NEC, but take the 16 bit address and
 // command each as one 16 bit value and not as 8 bit normal and 8 bit inverted
-// value. #define USE_FAST_PROTOCOL // Use FAST protocol instead of NEC / ONKYO
+// #define USE_FAST_PROTOCOL // Use FAST protocol instead of NEC / ONKYO
 #define IR_RECEIVE_PIN 35
 // dont use pin 13 its fucked up
 #include "TinyIRReceiver.hpp"
@@ -68,6 +68,12 @@ void hit_recieved(uint8_t result) {
   esp_now_send(broadcastAddress, (uint8_t *)&data, sizeof(data));
 }
 
+void decodeIRCommand(uint16_t command, uint8_t &shooterID, uint8_t &shotID) {
+  shooterID =
+      (command >> 8) & 0x7F; // Extract the upper 7 bits for the shooter ID
+  shotID = command & 0xFF;   // Extract the lower 8 bits for the shot ID
+}
+
 int i = 0;
 void loop() {
   if (TinyIRReceiverData.justWritten) {
@@ -77,6 +83,7 @@ void loop() {
     // We have no address at FAST protocol
     Serial.print(F("Address=0x"));
     Serial.print(TinyIRReceiverData.Address, HEX);
+    hit_recieved(TinyIRReceiverData.Address);
     Serial.print(' ');
 #endif
     Serial.print(F("Command=0x"));
@@ -84,6 +91,7 @@ void loop() {
     if (TinyIRReceiverData.Flags == IRDATA_FLAGS_IS_REPEAT) {
       Serial.println(F(" Repeat, skipping hit_recieved"));
     } else {
+
       hit_recieved(TinyIRReceiverData.Command);
     }
 

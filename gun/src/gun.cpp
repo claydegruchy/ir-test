@@ -37,6 +37,8 @@ uint32_t shots_fired = 0;
 uint32_t fire_shot_cooldown_remaining = 0;
 uint32_t reload_cooldown_remaining = 0;
 
+uint8_t shot_rotation_indicator = 0;
+
 BLECharacteristic *shotFiredCharacteristic = NULL;
 BLECharacteristic *reloadPressedCharacteristic = NULL;
 BLECharacteristic *configurationCharacteristic = NULL;
@@ -230,10 +232,19 @@ void gun_setup(BLEService *pService) {
   Serial.println("[GUN]  Running GUN_SETUP complete");
 }
 
+uint16_t createIRCommand(uint8_t shooterID, uint8_t shotID) {
+  Serial.println("running createIRCommand");
+  uint16_t sig = (shooterID << 8) | (shotID & 0xFF);
+  Serial.println(shooterID);
+  Serial.println(shotID);
+  Serial.println(sig);
+  return sig;
+}
+
 void send_ir_signal() {
   // Serial.println("[GUN]  [send_ir_signal]  sending ir signal ");
   // Serial.flush();
-  sendNEC(IR_SEND_PIN, 0, DEVICE_ID,
+  sendNEC(IR_SEND_PIN, 0, createIRCommand(DEVICE_ID, shot_rotation_indicator),
           2); // Send address 0 and command 11 on pin 3 with 2 repeats.
 }
 
@@ -265,6 +276,10 @@ void fire_gun() {
   // actually send the IR
 
   unsigned long start = micros();
+
+  if (shot_rotation_indicator > 254) {
+    shot_rotation_indicator = 1;
+  }
 
   send_ir_signal();
 
@@ -306,7 +321,7 @@ bool previous_reload_pin_state = 1;
 void gun_tick(int tick = -1) {
   // Serial.println("[GUN]  [gun_tick] Running gun_tick");
   if (!gun_enabled) {
-    Serial.println("[GUN]  [gun_tick] gun not enabled. skipping");
+    // Serial.println("[GUN]  [gun_tick] gun not enabled. skipping");
     return;
   }
 
