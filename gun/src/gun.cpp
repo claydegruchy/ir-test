@@ -232,19 +232,10 @@ void gun_setup(BLEService *pService) {
   Serial.println("[GUN]  Running GUN_SETUP complete");
 }
 
-uint16_t createIRCommand(uint8_t shooterID, uint8_t shotID) {
-  Serial.println("running createIRCommand");
-  uint16_t sig = (shooterID << 8) | (shotID & 0xFF);
-  Serial.println(shooterID);
-  Serial.println(shotID);
-  Serial.println(sig);
-  return sig;
-}
-
 void send_ir_signal() {
   // Serial.println("[GUN]  [send_ir_signal]  sending ir signal ");
   // Serial.flush();
-  sendNEC(IR_SEND_PIN, 0, createIRCommand(DEVICE_ID, shot_rotation_indicator),
+  sendNEC(IR_SEND_PIN, shot_rotation_indicator, DEVICE_ID,
           2); // Send address 0 and command 11 on pin 3 with 2 repeats.
 }
 
