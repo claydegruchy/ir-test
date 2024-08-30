@@ -65,7 +65,23 @@ void hit_recieved(uint8_t result) {
   data.val = result;
   data.id = DEVICE_ID;
 
-  esp_now_send(broadcastAddress, (uint8_t *)&data, sizeof(data));
+  esp_err_t result =
+      esp_now_send(broadcastAddress, (uint8_t *)&data, sizeof(data));
+  if (result == ESP_OK)
+    Serial.println("SUCCESS:succeed ");
+  if (result == ESP_ERR_ESPNOW_NOT_INIT)
+    Serial.println("ERROR:ESPNOW is not initialized ");
+  if (result == ESP_ERR_ESPNOW_ARG)
+    Serial.println("ERROR:invalid argument ");
+  if (result == ESP_ERR_ESPNOW_INTERNAL)
+    Serial.println("ERROR:internal error ");
+  if (result == ESP_ERR_ESPNOW_NO_MEM)
+    Serial.println("ERROR:out of memory, when this happens, you can delay a "
+                   "while before sending the next data ");
+  if (result == ESP_ERR_ESPNOW_NOT_FOUND)
+    Serial.println("ERROR:peer is not found ");
+  if (result == ESP_ERR_ESPNOW_IF)
+    Serial.println("ERROR:current WiFi interface doesn't match that of peer");
 }
 
 int i = 0;

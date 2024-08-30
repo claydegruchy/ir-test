@@ -306,7 +306,7 @@ bool previous_reload_pin_state = 1;
 void gun_tick(int tick = -1) {
   // Serial.println("[GUN]  [gun_tick] Running gun_tick");
   if (!gun_enabled) {
-    Serial.println("[GUN]  [gun_tick] gun not enabled. skipping");
+    // Serial.println("[GUN]  [gun_tick] gun not enabled. skipping");
     return;
   }
 
