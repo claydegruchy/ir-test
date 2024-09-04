@@ -8,8 +8,8 @@
 #include <BLEServer.h>
 #include <BLEUtils.h>
 
-int DEVICE_ID = 2;
-// int DEVICE_ID = 3;
+uint32_t DEVICE_ID = 2;
+// uint32_t DEVICE_ID = 3;
 #define DEVICE_TYPE "GUN"
 
 #define HEALTH_CHECK_FREQUENCY 1000

@@ -1,1 +1,3 @@
-extern int DEVICE_ID;
+#include <stdint.h>
+
+extern uint32_t DEVICE_ID;
